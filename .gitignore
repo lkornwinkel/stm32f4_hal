@@ -1,0 +1,6 @@
+.cache
+.idea
+.cmake-build*
+build*
+docs
+

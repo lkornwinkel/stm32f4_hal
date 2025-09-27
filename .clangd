@@ -1,0 +1,8 @@
+CompileFlags:
+  Remove: -mthumb-interwork
+
+
+CompileFlags:
+  CompilationDatabase: build/
+
+

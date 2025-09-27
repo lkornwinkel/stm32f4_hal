@@ -1,0 +1,70 @@
+cmake_minimum_required(VERSION 3.21)
+
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_VERSION 1)
+
+set(CMAKE_C_COMPILER arm-none-eabi-gcc)
+set(CMAKE_ASM_COMPILER arm-none-eabi-gcc)
+set(CMAKE_AR arm-none-eabi-ar)
+set(CMAKE_OBJCOPY arm-none-eabi-objcopy)
+set(CMAKE_OBJDUMP arm-none-eabi-objdump)
+set(SIZE arm-none-eabi-size)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+
+set(CMAKE_C_STANDARD 11)
+
+project(carl C ASM)
+
+set(MCPU cortex-m4)
+
+add_compile_definitions(ARM_MATH_CM4;ARM_MATH_MATRIX_CHECK;ARM_MATH_ROUNDING)
+add_compile_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
+add_link_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
+add_compile_options(-O0 -g)
+
+add_compile_options(-mcpu=${MCPU} -mthumb -mthumb-interwork)
+add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-length=0)
+add_definitions(-DCORE_CM4 -DDEBUG -DSTM32F446xx)
+
+include_directories(
+        ${CMAKE_SOURCE_DIR}/cmsis/Drivers/CMSIS/Include
+        ${CMAKE_SOURCE_DIR}/cmsis/Drivers/CMSIS/Device/ST/STM32F4xx/Include
+        ${CMAKE_SOURCE_DIR}/stm32f4_hal/include
+        ${CMAKE_SOURCE_DIR}/carl/include
+)
+
+set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/STM32F446RETX_FLASH.ld)
+
+set(STARTUP_FILE ${CMAKE_SOURCE_DIR}/cmsis/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f446xx.s)
+set(SYSTEM_FILE ${CMAKE_SOURCE_DIR}/cmsis/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c)
+#set(BSP_FILE "")
+
+set(CMSIS_SOURCES ${STARTUP_FILE} ${SYSTEM_FILE})
+
+file(GLOB_RECURSE STM32F4_HAL_SOURCES stm32f4_hal/src/*.c)
+
+file(GLOB_RECURSE CARL_SOURCES carl/src/*.c)
+
+
+set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/STM32F446RETX_FLASH.ld)
+
+add_link_options(-Wl,-gc-sections,--print-memory-usage,-Map=${PROJECT_BINARY_DIR}/${PROJECT_NAME}.map)
+add_link_options(-mcpu=${MCPU} -mthumb -mthumb-interwork)
+add_link_options(-T ${LINKER_SCRIPT})
+
+
+add_library(CMSIS STATIC ${CMSIS_SOURCES})
+add_library(stm32f4_hal STATIC ${STM32F4_HAL_SOURCES})
+
+add_executable(${PROJECT_NAME}.elf ${CARL_SOURCES} ${LINKER_SCRIPT})
+set_target_properties(${PROJECT_NAME}.elf PROPERTIES LINKER_LANGUAGE C)
+target_link_libraries(${PROJECT_NAME}.elf CMSIS stm32f4_hal)
+
+set(HEX_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.hex)
+set(BIN_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.bin)
+
+add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
+        COMMAND ${CMAKE_OBJCOPY} -Oihex $<TARGET_FILE:${PROJECT_NAME}.elf> ${HEX_FILE}
+        COMMAND ${CMAKE_OBJCOPY} -Obinary $<TARGET_FILE:${PROJECT_NAME}.elf> ${BIN_FILE}
+        COMMENT "Building ${HEX_FILE}
+Building ${BIN_FILE}")

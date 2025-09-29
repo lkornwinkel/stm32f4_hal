@@ -1,20 +1,13 @@
 cmake_minimum_required(VERSION 3.28)
+set(CMAKE_TRY_COMÜMPILE_TARGET_TYPE STATIC_LIBRARY)
+project(stm32f4_hal C)
 
+set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/toolchain.cmake)
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_VERSION 1)
 
-set(CMAKE_C_COMPILER arm-none-eabi-gcc)
-set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
-set(CMAKE_ASM_COMPILER arm-none-eabi-gcc)
-set(CMAKE_AR arm-none-eabi-ar)
-set(CMAKE_OBJCOPY arm-none-eabi-objcopy)
-set(CMAKE_OBJDUMP arm-none-eabi-objdump)
-set(SIZE arm-none-eabi-size)
-set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
-
 set(CMAKE_C_STANDARD 11)
 
-project(stm32f4_hal C ASM)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

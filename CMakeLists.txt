@@ -59,7 +59,7 @@ set(CMSIS_SOURCES ${STARTUP_FILE} ${SYSTEM_FILE})
 add_library(${PROJECT_NAME} STATIC ${STM32F4_HAL_SOURCES} ${STM32F4_HAL_INCLUDES})
 
 target_include_directories(${PROJECT_NAME}
-        PUBLIC ${CMAKE_SOURCE_DIR}/include
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
         PUBLIC ${CMSIS_SOURCES_PATH}/Include
         PUBLIC ${CORE_SOURCES_PATH}/Core/Include
 )

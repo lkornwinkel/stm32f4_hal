@@ -22,7 +22,7 @@ add_compile_options(-mcpu=${MCPU} -mthumb -mthumb-interwork)
 add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-length=0)
 add_definitions(-DCORE_CM4 -DDEBUG -DSTM32F446xx)
 
-set(EXTERNAL_SOURCES_PATH ${CMAKE_SOURCE_DIR}/extern)
+set(EXTERNAL_SOURCES_PATH ${CMAKE_CURRENT_SOURCE_DIR}/extern)
 set(CMSIS_SOURCES_PATH ${EXTERNAL_SOURCES_PATH}/cmsis)
 set(CORE_SOURCES_PATH ${EXTERNAL_SOURCES_PATH}/core)
 

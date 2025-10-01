@@ -157,16 +157,21 @@ hal_error_t hal_uart_setup_dma(hal_uart_index_t uart_index, hal_dma_t *dma_rx, h
     return err;
 }
 
-static hal_error_t hal_uart_snd_byte(uint8_t byte) {
+static hal_error_t hal_uart_snd_byte(hal_uart_index_t uart_index, uint8_t byte) {
     hal_error_t lErr = eHAL_ERROR_OK;
-    USART_TypeDef *uartx = m_hal_uart[eHAL_UART1].uart;
 
-    // Auf TXE (Datenregister leer) warten
-    while ((uartx->SR & USART_SR_TXE) == 0) {
-        /* warten */
+    lErr = hal_uart_check_index(uart_index);
+
+    if (lErr == eHAL_ERROR_OK) {
+        USART_TypeDef *uartx = m_hal_uart[uart_index].uart;
+
+        // Auf TXE (Datenregister leer) warten
+        while ((uartx->SR & USART_SR_TXE) == 0) {
+            /* warten */
+        }
+
+        uartx->DR = byte;
     }
-
-    uartx->DR = byte;
 
     return lErr;
 }
@@ -179,7 +184,7 @@ hal_error_t hal_uart_snd_polling(hal_uart_index_t uart_index, const uint8_t *buf
     uartx->CR1 |= (USART_CR1_TE | USART_CR1_UE);
 
     for (uint16_t i = 0; i < length; i++) {
-        lErr = hal_uart_snd_byte(buffer[i]);
+        lErr = hal_uart_snd_byte(uart_index, buffer[i]);
 
         if (lErr != eHAL_ERROR_OK) {
             break;
@@ -260,3 +265,29 @@ hal_error_t hal_uart_wait_for_transfer_complete(USART_TypeDef *uartx) {
     return lErr;
 }
 
+
+static hal_error_t hal_uart_rcv_byte(hal_uart_index_t uart_index, uint8_t *byteReturn) {
+    hal_error_t lErr = eHAL_ERROR_OK;
+
+    lErr = hal_uart_check_index(uart_index);
+
+
+    if (lErr == eHAL_ERROR_OK) {
+        if (byteReturn == NULL) {
+            lErr = eHAL_ERROR_NULLPOINTER;
+        }
+    }
+
+    if (lErr == eHAL_ERROR_OK) {
+        USART_TypeDef *uartx = m_hal_uart[uart_index].uart;
+
+        // Auf TXE (Datenregister leer) warten
+        while ((uartx->SR & USART_SR_RXNE) == 0) {
+            /* warten */
+        }
+
+        *byteReturn = uartx->DR & 0xFF;
+    }
+
+    return lErr;
+}

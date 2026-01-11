@@ -58,15 +58,15 @@ extern hal_error_t hal_spi_setup(hal_spi_setup_def_t setup_def);
 
 extern hal_error_t hal_spi_setup_dma(hal_spi_index_t spi_index, hal_dma_t *dma_rx, hal_dma_t *dma_tx);
 
-extern hal_error_t hal_spi_snd_dma(hal_spi_index_t spi_index, const uint8_t *buffer, uint16_t length);
+extern hal_error_t hal_spi_tx_dma(hal_spi_index_t spi_index, const uint8_t *buffer, uint16_t length);
 
-extern hal_error_t hal_spi_rcv_dma(hal_spi_index_t spi_index, uint8_t *buffer, uint16_t length);
+extern hal_error_t hal_spi_rx_dma(hal_spi_index_t spi_index, uint8_t *buffer, uint16_t length);
 
-extern hal_error_t hal_spi_snd_polling(hal_spi_index_t spi_index, const uint8_t *buffer, uint16_t length);
+extern hal_error_t hal_spi_tx_polling(hal_spi_index_t spi_index, const uint8_t *buffer, uint16_t length);
 
-extern hal_error_t hal_spi_rcv_polling(hal_spi_index_t spi_index, uint8_t *buffer, uint16_t length);
+extern hal_error_t hal_spi_rx_polling(hal_spi_index_t spi_index, uint8_t *buffer, uint16_t length);
 
-extern hal_error_t hal_spi_snd_start(hal_spi_index_t spi_index);
+extern hal_error_t hal_spi_tx_start(hal_spi_index_t spi_index);
 
 
 #ifdef __cplusplus

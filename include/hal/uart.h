@@ -49,14 +49,15 @@ extern void hal_uart_enable(USART_TypeDef *uartx);
 extern void hal_uart_disable(USART_TypeDef *uartx);
 extern hal_error_t hal_uart_setup(hal_uart_setup_t uart);
 extern hal_error_t hal_uart_setup_dma(hal_uart_index_t uart_index, hal_dma_t *dma_rx, hal_dma_t *dma_tx);
-extern hal_error_t hal_uart_snd_dma(hal_uart_index_t uart_index, uint16_t length);
-extern hal_error_t hal_uart_rcv_dma(hal_uart_index_t uart_index, uint8_t *buffer, uint16_t length);
-extern hal_error_t hal_uart_snd_polling(hal_uart_index_t uart_index, const uint8_t *buffer, uint16_t length);
-extern hal_error_t hal_uart_rcv_polling(hal_uart_index_t uart_index, uint8_t *buffer, uint16_t length);
+extern hal_error_t hal_uart_tx_dma(hal_uart_index_t uart_index, uint16_t length);
+extern hal_error_t hal_uart_rx_dma(hal_uart_index_t uart_index, uint8_t *buffer, uint16_t length);
+extern hal_error_t hal_uart_tx_polling(hal_uart_index_t uart_index, const uint8_t *buffer, uint16_t length);
+extern hal_error_t hal_uart_rx_polling(hal_uart_index_t uart_index, uint8_t *buffer, uint16_t length);
 
 // extern bool_t hal_uart_transmission_complete(USART_TypeDef *uartx);
 extern hal_error_t hal_uart_wait_for_transfer_complete(USART_TypeDef *uartx);
 extern hal_error_t hal_uart_start_tx_dma(hal_uart_index_t uart_index, const void *buf, uint16_t len);
+extern hal_error_t hal_uart_start_rx_dma_idle(hal_uart_index_t uart_index, void *buf, uint16_t len);
 
 #ifdef __cplusplus
 }

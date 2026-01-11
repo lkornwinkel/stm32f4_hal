@@ -7,9 +7,9 @@
 
 static hal_spi_t m_hal_spi[HAL_SPI_COUNT];
 
-static hal_error_t hal_spi_snd_start_dma(hal_spi_index_t spi_index, uint16_t length);
+static hal_error_t hal_spi_tx_start_dma(hal_spi_index_t spi_index, uint16_t length);
 
-static hal_error_t hal_spi_rcv_start_dma(hal_spi_index_t spi_index, uint16_t length);
+static hal_error_t hal_spi_rx_start_dma(hal_spi_index_t spi_index, uint16_t length);
 
 static hal_error_t hal_spi_check_index(hal_spi_index_t spi_index) {
     hal_error_t err = eHAL_ERROR_OK;
@@ -121,13 +121,13 @@ hal_error_t hal_spi_snd_dma(hal_spi_index_t spi_index, const uint8_t *buffer, ui
     if (err == eHAL_ERROR_OK) {
         // memcpy(m_hal_spi[spi_index].buffer_rx, buffer, length);
 
-        err = hal_spi_snd_start_dma(spi_index, length);
+        err = hal_spi_tx_start_dma(spi_index, length);
     }
 
     return err;
 }
 
-static hal_error_t hal_spi_snd_start_dma(hal_spi_index_t spi_index, uint16_t length) {
+static hal_error_t hal_spi_tx_start_dma(hal_spi_index_t spi_index, uint16_t length) {
     hal_error_t err = eHAL_ERROR_OK;
 
     if (m_hal_spi[spi_index].dma_tx == NULL) {
@@ -145,7 +145,7 @@ static hal_error_t hal_spi_snd_start_dma(hal_spi_index_t spi_index, uint16_t len
     return err;
 }
 
-hal_error_t hal_spi_snd_polling(hal_spi_index_t spi_index, const uint8_t *buffer, uint16_t length) {
+hal_error_t hal_spi_tx_polling(hal_spi_index_t spi_index, const uint8_t *buffer, uint16_t length) {
     hal_error_t err = eHAL_ERROR_OK;
 
     if (buffer == NULL) {
@@ -176,7 +176,7 @@ hal_error_t hal_spi_snd_polling(hal_spi_index_t spi_index, const uint8_t *buffer
     return err;
 }
 
-hal_error_t hal_spi_rcv_dma(hal_spi_index_t spi_index, uint8_t *buffer, uint16_t length) {
+hal_error_t hal_spi_rx_dma(hal_spi_index_t spi_index, uint8_t *buffer, uint16_t length) {
     hal_error_t err = eHAL_ERROR_OK;
 
 
@@ -195,13 +195,13 @@ hal_error_t hal_spi_rcv_dma(hal_spi_index_t spi_index, uint8_t *buffer, uint16_t
     }
 
     if (err == eHAL_ERROR_OK) {
-        err = hal_spi_rcv_start_dma(spi_index, length);
+        err = hal_spi_rx_start_dma(spi_index, length);
     }
 
     return err;
 }
 
-static hal_error_t hal_spi_rcv_start_dma(hal_spi_index_t spi_index, uint16_t length) {
+static hal_error_t hal_spi_rx_start_dma(hal_spi_index_t spi_index, uint16_t length) {
     hal_error_t err = eHAL_ERROR_OK;
 
     err = hal_spi_check_index(spi_index);
@@ -219,7 +219,7 @@ static hal_error_t hal_spi_rcv_start_dma(hal_spi_index_t spi_index, uint16_t len
     return err;
 }
 
-hal_error_t hal_spi_rcv_polling(hal_spi_index_t spi_index, uint8_t *buffer, uint16_t length) {
+hal_error_t hal_spi_rx_polling(hal_spi_index_t spi_index, uint8_t *buffer, uint16_t length) {
     hal_error_t err = eHAL_ERROR_OK;
 
 

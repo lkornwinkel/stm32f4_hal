@@ -1,8 +1,10 @@
-#include <stddef.h>
-#include <hal/uart.h>
 #include <hal/buffer.h>
-#include <hal/cmsis.h>
 #include <hal/clock.h>
+#include <hal/cmsis.h>
+#include <hal/uart.h>
+#include <stddef.h>
+
+#include "hal/util.h"
 
 static hal_uart_t m_hal_uart[HAL_UART_COUNT];
 
@@ -52,9 +54,7 @@ static hal_clock_register_t hal_uart_get_clock_register(USART_TypeDef *uartx) {
     return reg;
 }
 
-hal_error_t hal_uart_init(void) {
-    return eHAL_ERROR_OK;
-}
+hal_error_t hal_uart_init(void) { return eHAL_ERROR_OK; }
 
 hal_error_t hal_uart_enable_clock(USART_TypeDef *uartx) {
     hal_error_t err = eHAL_ERROR_OK;
@@ -73,17 +73,11 @@ hal_error_t hal_uart_enable_clock(USART_TypeDef *uartx) {
     return err;
 }
 
-void hal_uart_enable(USART_TypeDef *uartx) {
-    uartx->CR1 |= USART_CR1_UE | USART_CR1_TE;
-}
+void hal_uart_enable(USART_TypeDef *uartx) { uartx->CR1 |= USART_CR1_UE | USART_CR1_TE; }
 
-void hal_uart_disable(USART_TypeDef *uartx) {
-    uartx->CR1 &= ~(USART_CR1_UE | USART_CR1_TE);
-}
+void hal_uart_disable(USART_TypeDef *uartx) { uartx->CR1 &= ~(USART_CR1_UE | USART_CR1_TE); }
 
-bool_t hal_uart_transmission_complete(USART_TypeDef *uartx) {
-    return (uartx->SR & USART_SR_TC) != 0;
-}
+bool_t hal_uart_transmission_complete(USART_TypeDef *uartx) { return (uartx->SR & USART_SR_TC) != 0; }
 
 hal_error_t hal_uart_get_index(USART_TypeDef *uart, hal_uart_index_t *indexRet) {
     hal_error_t err = eHAL_ERROR_OK;
@@ -136,9 +130,6 @@ hal_error_t hal_uart_setup(hal_uart_setup_t uart) {
         uart.uart->CR2 = uart.cr2;
         uart.uart->CR3 = uart.cr3;
         uart.uart->BRR = 0x008b;
-
-
-        // hal_uart_enable(uart.uart);
     }
 
     return lErr;
@@ -157,7 +148,7 @@ hal_error_t hal_uart_setup_dma(hal_uart_index_t uart_index, hal_dma_t *dma_rx, h
     return err;
 }
 
-static hal_error_t hal_uart_snd_byte(hal_uart_index_t uart_index, uint8_t byte) {
+static hal_error_t hal_uart_tx_byte(hal_uart_index_t uart_index, uint8_t byte) {
     hal_error_t lErr = eHAL_ERROR_OK;
 
     lErr = hal_uart_check_index(uart_index);
@@ -165,9 +156,9 @@ static hal_error_t hal_uart_snd_byte(hal_uart_index_t uart_index, uint8_t byte) 
     if (lErr == eHAL_ERROR_OK) {
         USART_TypeDef *uartx = m_hal_uart[uart_index].uart;
 
-        // Auf TXE (Datenregister leer) warten
+        // wait for TXE (data register empty)
         while ((uartx->SR & USART_SR_TXE) == 0) {
-            /* warten */
+            /* nothing */
         }
 
         uartx->DR = byte;
@@ -176,7 +167,7 @@ static hal_error_t hal_uart_snd_byte(hal_uart_index_t uart_index, uint8_t byte) 
     return lErr;
 }
 
-hal_error_t hal_uart_snd_polling(hal_uart_index_t uart_index, const uint8_t *buffer, uint16_t length) {
+hal_error_t hal_uart_tx_polling(hal_uart_index_t uart_index, const uint8_t *buffer, uint16_t length) {
     hal_error_t lErr = eHAL_ERROR_OK;
 
     USART_TypeDef *uartx = m_hal_uart[uart_index].uart;
@@ -184,14 +175,14 @@ hal_error_t hal_uart_snd_polling(hal_uart_index_t uart_index, const uint8_t *buf
     uartx->CR1 |= (USART_CR1_TE | USART_CR1_UE);
 
     for (uint16_t i = 0; i < length; i++) {
-        lErr = hal_uart_snd_byte(uart_index, buffer[i]);
+        lErr = hal_uart_tx_byte(uart_index, buffer[i]);
 
         if (lErr != eHAL_ERROR_OK) {
             break;
         }
     }
 
-    // Am Ende auf vollständige Übertragung warten (TC)
+    // wait for TC (transmission complete)
     while ((uartx->SR & USART_SR_TC) == 0) {
     }
 
@@ -199,7 +190,7 @@ hal_error_t hal_uart_snd_polling(hal_uart_index_t uart_index, const uint8_t *buf
     return lErr;
 }
 
-hal_error_t hal_uart_snd_dma(hal_uart_index_t uart_index, uint16_t length) {
+hal_error_t hal_uart_tx_dma(hal_uart_index_t uart_index, uint16_t length) {
     hal_error_t lErr = eHAL_ERROR_OK;
     USART_TypeDef *uartx = m_hal_uart[uart_index].uart;
     DMA_TypeDef *dmax = m_hal_uart[uart_index].dma_tx->dma;
@@ -213,40 +204,45 @@ hal_error_t hal_uart_snd_dma(hal_uart_index_t uart_index, uint16_t length) {
     uartx->CR3 |= USART_CR3_DMAT;
 
     // hal_dma_enable_clock(dmax);
+    return lErr;
 }
 
 
 hal_error_t hal_uart_start_tx_dma(hal_uart_index_t uart_index, const void *buf, uint16_t len) {
-    hal_error_t lErr = eHAL_ERROR_OK;
-    // hal_error_t err = hal_uart_check_index(uart_index);
-    // if (err != eHAL_ERROR_OK) return err;
+    hal_error_t lErr = hal_uart_check_index(uart_index);
+    DMA_Stream_TypeDef *lStream = NULL;
+    USART_TypeDef *lUart = NULL;
 
-    DMA_Stream_TypeDef *stream = m_hal_uart[uart_index].dma_tx ? m_hal_uart[uart_index].dma_tx->stream : NULL;
-    USART_TypeDef *uart = m_hal_uart[uart_index].uart;
-    if (!stream || !uart) {
-        return eHAL_ERROR_PARAM;
+    if (lErr == eHAL_ERROR_OK) {
+        lStream = m_hal_uart[uart_index].dma_tx ? m_hal_uart[uart_index].dma_tx->stream : NULL;
+        lUart = m_hal_uart[uart_index].uart;
+        if (!lStream || !lUart) {
+            return eHAL_ERROR_PARAM;
+        }
     }
 
-    // Stream deaktivieren und Flags löschen
-    stream->CR &= ~DMA_SxCR_EN;
-    while (stream->CR & DMA_SxCR_EN) {
-    } // warten bis aus
-    // Flags je nach Stream löschen (hier Beispiel für generisches Clear; implementiere passend)
-    // hal_dma_clear_flags(stream);
+    if (lErr == eHAL_ERROR_OK) {
+        // Stream deaktivieren und Flags löschen
+        lStream->CR &= ~DMA_SxCR_EN;
+        while (lStream->CR & DMA_SxCR_EN) {
+        } // warten bis aus
+        // Flags je nach Stream löschen (hier Beispiel für generisches Clear; implementiere passend)
+        // hal_dma_clear_flags(stream);
 
-    // Quelle/Ziel/Länge setzen
-    stream->PAR = (uint32_t) &uart->DR;
-    stream->M0AR = (uint32_t) buf;
-    stream->NDTR = len;
+        // Quelle/Ziel/Länge setzen
+        lStream->PAR = (uint32_t) &lUart->DR;
+        lStream->M0AR = (uint32_t) buf;
+        lStream->NDTR = len;
+        // UART-DMA TX sicher aktiv
 
-    // UART-DMA TX sicher aktiv
+        hal_uart_enable(lUart);
 
-    hal_uart_enable(uart);
+        // Stream starten
+        lStream->CR |= DMA_SxCR_EN;
+        lUart->CR3 |= USART_CR3_DMAT;
+    }
 
-    // Stream starten
-    stream->CR |= DMA_SxCR_EN;
-    uart->CR3 |= USART_CR3_DMAT;
-    return eHAL_ERROR_OK;
+    return lErr;
 }
 
 
@@ -257,8 +253,9 @@ hal_error_t hal_uart_wait_for_transfer_complete(USART_TypeDef *uartx) {
         lErr = eHAL_ERROR_NULLPOINTER;
     }
     if (lErr == eHAL_ERROR_OK) {
+        // wait for TC (transmission complete)
         while ((USART1->SR & USART_SR_TC) == 0) {
-            /* wait */
+            /* nothing */
         }
     }
 
@@ -266,8 +263,8 @@ hal_error_t hal_uart_wait_for_transfer_complete(USART_TypeDef *uartx) {
 }
 
 
-static hal_error_t hal_uart_rcv_byte(hal_uart_index_t uart_index, uint8_t *byteReturn) {
-    hal_error_t lErr = eHAL_ERROR_OK;
+static hal_error_t hal_uart_rx_byte(hal_uart_index_t uart_index, uint8_t *byteReturn) {
+    hal_error_t lErr;
 
     lErr = hal_uart_check_index(uart_index);
 
@@ -291,3 +288,60 @@ static hal_error_t hal_uart_rcv_byte(hal_uart_index_t uart_index, uint8_t *byteR
 
     return lErr;
 }
+
+hal_error_t hal_uart_start_rx_dma_idle(hal_uart_index_t uart_index, void *buf, uint16_t len) {
+    hal_error_t lErr = hal_uart_check_index(uart_index);
+    DMA_Stream_TypeDef *lStream = NULL;
+    USART_TypeDef *lUart = NULL;
+
+    if (lErr == eHAL_ERROR_OK) {
+        lStream = m_hal_uart[uart_index].dma_tx ? m_hal_uart[uart_index].dma_tx->stream : NULL;
+        lUart = m_hal_uart[uart_index].uart;
+    }
+
+    if (lErr == eHAL_ERROR_OK) {
+        if (!lStream || !lUart) {
+            lErr = eHAL_ERROR_PARAM;
+        }
+    }
+
+    if (lErr == eHAL_ERROR_OK) {
+        lStream = m_hal_uart[uart_index].dma_rx ? m_hal_uart[uart_index].dma_rx->stream : NULL;
+        lUart = m_hal_uart[uart_index].uart;
+
+
+        NVIC_EnableIRQ(DMA1_Stream5_IRQn);
+        NVIC_SetPriority(DMA1_Stream5_IRQn, 0);
+
+        // 1. DMA Stream deaktivieren, um Konfiguration zu ändern
+        lStream->CR &= ~DMA_SxCR_EN;
+
+        lErr = hal_util_wait_clear(&lStream->CR, DMA_SxCR_EN, 1000);
+    }
+
+    if (lErr == eHAL_ERROR_OK) {
+        // 2. Peripherie-Adresse (UART Data Register) setzen
+        lStream->PAR = (uint32_t) &lUart->DR;
+
+        // 3. Speicher-Adresse (Zielbuffer) setzen
+        lStream->M0AR = (uint32_t) buf;
+
+        // 4. Anzahl der zu erwartenden Daten (Buffergröße)
+        lStream->NDTR = len;
+
+        // 5. DMA Stream aktivieren
+        lStream->CR |= DMA_SxCR_EN;
+
+        // 6. UART DMA-Empfang aktivieren (DMAR)
+        lUart->CR3 |= USART_CR3_DMAR;
+
+        // 7. Idle Line Interrupt aktivieren (löst Interrupt aus, wenn Empfangspause erkannt wird)
+        lUart->CR1 |= USART_CR1_IDLEIE;
+
+        // 8. Empfänger und UART aktivieren
+        lUart->CR1 |= (USART_CR1_RE | USART_CR1_UE);
+    }
+
+    return lErr;
+}
+
